@@ -1,0 +1,92 @@
+name: Continuous Delivery
+
+on:
+  push:
+    tags:
+      - "*"
+
+# Sets permissions of the GITHUB_TOKEN
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  packages: write
+
+jobs:
+  publish_release:
+    name: Publish Github release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: python scripts/install.py
+
+      - name: Build package
+        run: |
+          inv build --docs
+          cd dist/
+          zip -r documentation.zip documentation
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v2
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: "dist/documentation"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
+
+      # - name: Publish a Python distribution to PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     password: {% raw %}${{ secrets.PYPI_API_TOKEN }}{% endraw %}
+
+      - name: Generate release notes and use it as a body of new release
+        shell: bash
+        run: |
+          RELEASE_NOTES=$(python scripts/notes.py)
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$RELEASE_NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Upload wheel to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          file: dist/*.whl
+          tag: {% raw %}${{ github.ref }}{% endraw %}
+          overwrite: true
+          file_glob: true
+          prerelease: {% raw %}${{ contains(github.ref, '-rc.') }}{% endraw %}
+          body: |
+            {% raw %}${{ env.RELEASE_NOTES }}{% endraw %}
+
+      - name: Upload sdist to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          file: dist/*.tar.gz
+          tag: {% raw %}${{ github.ref }}{% endraw %}
+          overwrite: true
+          file_glob: true
+          prerelease: {% raw %}${{ contains(github.ref, '-rc.') }}{% endraw %}
+
+      - name: Upload documentation to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
+          file: dist/documentation.zip
+          tag: {% raw %}${{ github.ref }}{% endraw %}
+          overwrite: true
+          file_glob: true
+          prerelease: {% raw %}${{ contains(github.ref, '-rc.') }}{% endraw %}

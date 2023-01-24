@@ -1,0 +1,39 @@
+name: Automated Semantic Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  do_release:
+    name: Create new release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: "${% raw %}{{ secrets.COMMIT_KEY }}{% endraw %}"
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install semantic release
+        run: |
+          npm i -g \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            conventional-changelog-conventionalcommits
+
+      - name: Execute semantic release
+        run: |
+          semantic-release --debug

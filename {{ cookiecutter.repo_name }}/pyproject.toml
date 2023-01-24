@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "{{ cookiecutter.project_name }}"
+authors = [
+    { author = "{{ cookiecutter.author }}", email = "{{ cookiecutter.email }}" },
+]
+description = "{{ cookiecutter.project_short_description }}"
+readme = "README.md"
+requires-python = "{{ cookiecutter.requires_python }}"
+license = { text = "{{ cookiecutter.license }}" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+]
+dynamic = ["version"]
+dependencies = []
+
+[project.optional-dependencies]
+build = ["build", "invoke"]
+dev = [
+    "black",
+    "isort",
+    "invoke",
+    "flake8",
+    "mypy",
+    "mutmut",
+    "pytest",
+    "pytest-cov",
+    "types-setuptools",
+]
+doc = [
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-material",
+    "mkdocs-section-index",
+    "mkdocstrings[python]",
+    "pymdown-extensions",
+]
+
+[project.urls]
+Repository = "{{ cookiecutter.repo_url }}"
+Issues = "{{ cookiecutter.issues_url }}"
+
+[tool.setuptools.dynamic]
+version = { attr = "{{ cookiecutter.project_import }}.__version__" }

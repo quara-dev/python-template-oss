@@ -1,0 +1,47 @@
+pool:
+  vmImage: "ubuntu-latest"
+
+trigger:
+  tags:
+    include:
+      - "*"
+
+jobs:
+  - job: Publish release
+    steps:
+      - checkout: self
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "3.8"
+
+      - script: |
+          python -m pip install --upgrade pip setuptools wheel twine
+          pip install -e .[build,doc]
+        displayName: Install dependencies
+
+      - script: |
+          inv build --docs
+          cd dist/
+          zip -r documentation.zip documentation
+        displayName: Build package
+
+      # Deploy Azure Static Web App v0
+      # - task: AzureStaticWebApp@0
+      #   inputs:
+      #     output_location: dist/documentation
+      #     skip_app_build: true
+      #     is_static_export: true
+      #     verbose: true
+      #   displayName: Publish documentation to Azure Static Web App
+
+      # - task: TwineAuthenticate@0
+      #   inputs:
+      #     # Update artifact feed name if required
+      #     artifactFeeds: {{ cookiecutter.project_name }}
+      #   displayName: Authenticate in order to publish to Azure Feed
+
+      # - script: |
+      #     echo -e "Publishing on feed $(feed.name) using configuration file $(PYPIRC_PATH)"
+      #     twine upload -r $(feed.name) --config-file $(PYPIRC_PATH) dist/*
+      #   displayName: Publish Python package to Azure Feed
