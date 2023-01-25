@@ -45,4 +45,4 @@ Repository = "{{ cookiecutter.repo_url }}"
 Issues = "{{ cookiecutter.issues_url }}"
 
 [tool.setuptools.dynamic]
-version = { attr = "{{ cookiecutter.project_import }}.__version__" }
+version = { attr = "{{ cookiecutter.project_slug }}.__version__" }

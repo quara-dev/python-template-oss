@@ -9,10 +9,7 @@ import subprocess
 import sys
 import venv
 
-ROOT_DIR = pathlib.Path(__file__).parent.parent.resolve(True)
-VENV_DIR = ROOT_DIR / ".venv"
-REQUIREMENTS = ROOT_DIR / "requirements.txt"
-REQUIREMENTS_DOCS = ROOT_DIR / "requirements-docs.txt"
+VENV_DIR = pathlib.Path(__file__).parent.parent.resolve(True) / ".venv"
 
 
 if os.name == "nt":
@@ -27,7 +24,6 @@ def install_virtualenv() -> None:
         VENV_DIR,
         system_site_packages=False,
         clear=False,
-        symlinks=False,
         with_pip=True,
         prompt=None,
     )
@@ -49,45 +45,51 @@ def install_virtualenv() -> None:
         sys.exit(1)
 
 
-def install_requirements(install_docs_requirements: bool = False) -> None:
-    """Installing requirements"""
+def install_project(extras: str) -> None:
+    """Installing project in editable mode using pip"""
     try:
-        subprocess.run(
-            [VENV_PYTHON, "-m", "pip", "install", "-r", REQUIREMENTS.as_posix()]
-        )
+        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "-e", f".[{extras}]"])
     except Exception:
         # No need to print traceback, error will be printed from subprocess stderr
         sys.exit(1)
-    if install_docs_requirements:
-        try:
-            subprocess.run(
-                [
-                    VENV_PYTHON,
-                    "-m",
-                    "pip",
-                    "install",
-                    "-r",
-                    REQUIREMENTS_DOCS.as_posix(),
-                ]
-            )
-        except Exception:
-            # No need to print traceback, error will be printed from subprocess stderr
-            sys.exit(1)
 
 
 cli_parser = argparse.ArgumentParser(
     description=(
         "Create or update virtual environment in project root directory then "
-        "install requirement."
+        "install project."
     )
 )
-cli_parser.add_argument("--docs", action="store_true", default=False)
-
+cli_parser.add_argument(
+    "-e",
+    "--extras",
+    type=str,
+    required=False,
+    default=None,
+    help="Install additional extras",
+)
+cli_parser.add_argument(
+    "-a",
+    "--all",
+    action="store_true",
+    required=False,
+    default=False,
+    help="Install all extras",
+)
 
 if __name__ == "__main__":
     args = cli_parser.parse_args()
-    docs = args.docs
+    # Parse arguments
+    extras = args.extras
+    all_extras = args.all
     # First make sure virtualenv exists
     install_virtualenv()
     # Install project in development mode
-    install_requirements(docs)
+    if extras:
+        install_project(extras)
+    elif all_extras:
+        # Install all extras
+        install_project("build,dev,doc")
+    else:
+        # Only install build dependencies by default
+        install_project("build")
