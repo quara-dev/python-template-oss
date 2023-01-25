@@ -20,7 +20,7 @@ def update_version_string(new_version: str) -> None:
         r"(^_*?version_*?\s*=\s*['\"])(\d+\.\d+\.\d+[^\"]*)", re.M
     )
     about = pathlib.Path(__file__).parent.parent.joinpath(
-        "src/{{ cookiecutter.project_import }}/__about__.py"
+        "src/{{ cookiecutter.project_slug }}/__about__.py"
     )
     with about.open("r+") as about_file:
         content = about_file.read()
@@ -33,6 +33,7 @@ def update_version_string(new_version: str) -> None:
             )
         )
         about_file.truncate()
+    subprocess.check_call(["poetry", "bump", new_version])
 
 
 def run(cmd: str) -> None:

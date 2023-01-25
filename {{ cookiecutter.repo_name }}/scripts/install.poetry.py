@@ -7,6 +7,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import typing as t
 import venv
 
 VENV_DIR = pathlib.Path(__file__).parent.parent.resolve(True) / ".venv"
@@ -24,7 +25,6 @@ def install_virtualenv() -> None:
         VENV_DIR,
         system_site_packages=False,
         clear=False,
-        symlinks=False,
         with_pip=True,
         prompt=None,
     )
@@ -38,7 +38,6 @@ def install_virtualenv() -> None:
                 "-U",
                 "pip",
                 "setuptools",
-                "wheel",
             ]
         )
     except Exception:
@@ -46,10 +45,13 @@ def install_virtualenv() -> None:
         sys.exit(1)
 
 
-def install_project(extras: str) -> None:
+def install_project(groups: t.Optional[str] = None) -> None:
     """Installing project in editable mode using pip"""
+    cmd = ["poetry", "install"]
+    if groups:
+        cmd += ["--with", groups]
     try:
-        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "-e", f".[{extras}]"])
+        subprocess.run(cmd)
     except Exception:
         # No need to print traceback, error will be printed from subprocess stderr
         sys.exit(1)
@@ -62,12 +64,12 @@ cli_parser = argparse.ArgumentParser(
     )
 )
 cli_parser.add_argument(
-    "-e",
-    "--extras",
+    "-g",
+    "--groups",
     type=str,
     required=False,
     default=None,
-    help="Install additional extras",
+    help="Install additional dependency groups",
 )
 cli_parser.add_argument(
     "-a",
@@ -75,22 +77,22 @@ cli_parser.add_argument(
     action="store_true",
     required=False,
     default=False,
-    help="Install all extras",
+    help="Install all dependency groups",
 )
 
 if __name__ == "__main__":
     args = cli_parser.parse_args()
     # Parse arguments
-    extras = args.extras
-    all_extras = args.all
+    groups = args.groups
+    all_groups = args.all
     # First make sure virtualenv exists
     install_virtualenv()
     # Install project in development mode
-    if extras:
-        install_project(extras)
-    elif all_extras:
+    if groups:
+        install_project(groups)
+    elif all_groups:
         # Install all extras
-        install_project("build,dev,doc")
+        install_project("dev,doc")
     else:
         # Only install build dependencies by default
-        install_project("build")
+        install_project()

@@ -26,13 +26,13 @@ jobs:
         run: python scripts/install.py
 
       - name: Lint with flake8
-        run: inv lint
+        run: .venv/bin/inv lint
 
       - name: Lint with mypy
-        run: inv check --include-tests
+        run: .venv/bin/inv check --include-tests
 
       - name: Test with pytest
-        run: inv test --coverage
+        run: .venv/bin/inv test --coverage
 
   sonar:
     name: Run SonarCloud analysis
@@ -51,10 +51,43 @@ jobs:
         run: python scripts/install.py
 
       - name: Test with pytest
-        run: inv test --coverage
+        run: .venv/bin/inv test --coverage
 
       - name: Analyze with SonarCloud
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
           SONAR_TOKEN: {% raw %}${{ secrets.SONAR_TOKEN }}{% endraw %}
+
+  semantic_release:
+    name: Create new release
+    runs-on: ubuntu-latest
+    needs: [test, sonar]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ssh-key: "${% raw %}{{ secrets.COMMIT_KEY }}{% endraw %}"
+
+      - name: Set up NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install semantic release
+        run: |
+          npm i -g \
+            semantic-release \
+            @semantic-release/commit-analyzer \
+            @semantic-release/changelog \
+            @semantic-release/exec \
+            conventional-changelog-conventionalcommits
+
+      - name: Execute semantic release
+        run: |
+          semantic-release --debug

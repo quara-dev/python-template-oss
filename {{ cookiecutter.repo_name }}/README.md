@@ -31,7 +31,7 @@ pip install {{cookiecutter.project_name}}@git+{{cookiecutter.repo_url}}.git
 Confirm that project is installed correctly by importing the version string:
 
 ```python
-from {{ cookiecutter.project_import }} import __version__
+from {{ cookiecutter.project_slug }} import __version__
 print(__version__)
 ```
 

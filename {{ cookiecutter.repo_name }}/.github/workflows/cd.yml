@@ -30,7 +30,7 @@ jobs:
 
       - name: Build package
         run: |
-          inv build --docs
+          .venv/bin/inv build --docs
           cd dist/
           zip -r documentation.zip documentation
 
@@ -46,10 +46,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v1
 
-      # - name: Publish a Python distribution to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     password: {% raw %}${{ secrets.PYPI_API_TOKEN }}{% endraw %}
+      {% if cookiecutter.pypi_package is true -%}
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: {% raw %}${{ secrets.PYPI_API_TOKEN }}{% endraw %}
+      {%- endif %}
 
       - name: Generate release notes and use it as a body of new release
         shell: bash
