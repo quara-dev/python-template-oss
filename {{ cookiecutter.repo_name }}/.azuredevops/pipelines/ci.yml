@@ -33,16 +33,18 @@ stages:
             inputs:
               versionSpec: $(PYTHON_VERSION)
 
-          - script: python3 scripts/install.py -e dev
+          - script: |
+              python -m pip install --user invoke
+              python3 scripts/install.py -e dev
             displayName: Install project and dependencies
 
-          - script: ./.venv/bin/inv lint
+          - script: python -m invoke lint
             displayName: Lint with flake8
 
-          - script: ./.venv/bin/inv check --include-tests
+          - script: python -m invoke check --include-tests
             displayName: Lint with mypy
 
-          - script: ./.venv/bin/inv check --coverage
+          - script: python -m invoke check --coverage
             displayName: Test with pytest
 
           # Only test result for Python 3.11 will be available
@@ -69,6 +71,18 @@ stages:
       - job: Run SonarCloud analysis
         steps:
           - checkout: self
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.8"
+
+          - script: |
+              python -m pip install --user invoke
+              python3 scripts/install.py -e dev
+            displayName: Install project and dependencies
+
+          - script: python -m invoke check --coverage
+            displayName: Test with pytest
 
           - task: SonarCloudPrepare@1
             inputs:

@@ -13,7 +13,7 @@ def show_version_string() -> None:
         r"(^_*?version_*?\s*=\s*['\"])(\d+\.\d+\.\d+[^\"]*)", re.M
     )
     about_file = pathlib.Path(__file__).parent.parent.joinpath(
-        "src/demo_project/__about__.py"
+        "src/{{ cookiecutter.project_slug }}/__about__.py"
     )
     try:
         about = about_file.read_text()

@@ -17,7 +17,7 @@ jobs:
 
       - script: |
           python -m pip install --upgrade pip setuptools wheel twine
-          pip install -e .[build,doc]
+          pip install -e .[build,docs]
         displayName: Install dependencies
 
       - script: |

@@ -26,11 +26,13 @@ jobs:
           python-version: 3.8
 
       - name: Install dependencies
-        run: python scripts/install.py
+        run: |
+          python -m pip install --user invoke
+          python scripts/install.py -e build,docs
 
       - name: Build package
         run: |
-          inv build --docs
+          python -m invoke build --docs
           cd dist/
           zip -r documentation.zip documentation
 
@@ -46,10 +48,12 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v1
 
-      # - name: Publish a Python distribution to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     password: {% raw %}${{ secrets.PYPI_API_TOKEN }}{% endraw %}
+      {% if cookiecutter.pypi_package is true -%}
+      - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: {% raw %}${{ secrets.PYPI_API_TOKEN }}{% endraw %}
+      {%- endif %}
 
       - name: Generate release notes and use it as a body of new release
         shell: bash

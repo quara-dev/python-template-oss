@@ -15,7 +15,7 @@ The [`install.py`](./install.py) script can be used to install the python projec
 
 It accepts two arguments:
 
-- `-e` or `--extras`: a string of comma-separated extras such as `"dev,doc,test"`.
+- `-e` or `--extras`: a string of comma-separated extras such as `"dev,docs,test"`.
 - `-a` or `--all`: a boolean flag indicating that all extras should be installed.
 
 Example usage:
