@@ -104,7 +104,7 @@ if {{cookiecutter.init_git_repo}}:
     if process.returncode != 0:
         print(process.stderr.decode(), file=sys.stderr)
         sys.exit(1)
-    subprocess.check_call(["git", "branch", "-m", "main"], stdout=subprocess.DEVNULL)
+    subprocess.check_call(["git", "checkout", "-b", "main"], stdout=subprocess.DEVNULL)
     subprocess.check_call(["git", "add", "."], stdout=subprocess.DEVNULL)
     subprocess.check_call(
         [
@@ -118,5 +118,3 @@ if {{cookiecutter.init_git_repo}}:
     subprocess.check_call(["git", "checkout", "-b", "next"], stdout=subprocess.DEVNULL)
     subprocess.check_call(["git", "--no-pager", "log", "--stat"])
     print(HELP)
-
-
