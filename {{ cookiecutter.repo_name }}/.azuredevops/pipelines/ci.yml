@@ -8,8 +8,8 @@ trigger: none
 variables:
   # Update sonar cloud endpoint name if required
   sonarCloudEndpointName: "SC"
-  sonarCloudOrganization: "{{ cookiecutter.sonar_organization }}"
-  sonarCloudProjectKey: "{{ cookiecutter.sonar_key }}"
+  sonarCloudOrganization: "{{ cookiecutter.sonarcloud_organization }}"
+  sonarCloudProjectKey: "{{ cookiecutter.sonarcloud_key }}"
   sonarCloudProjectName: "{{ cookiecutter.project_name }}"
 
 stages:

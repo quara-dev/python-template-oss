@@ -9,7 +9,8 @@ import subprocess
 import sys
 import venv
 
-VENV_DIR = pathlib.Path(__file__).parent.parent.resolve(True) / ".venv"
+PROJECT_DIR = pathlib.Path(__file__).parent.parent.resolve(True)
+VENV_DIR = PROJECT_DIR / ".venv"
 
 
 if os.name == "nt":
@@ -48,7 +49,16 @@ def install_virtualenv() -> None:
 def install_project(extras: str) -> None:
     """Installing project in editable mode using pip"""
     try:
-        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "-e", f".[{extras}]"])
+        subprocess.run(
+            [
+                VENV_PYTHON,
+                "-m",
+                "pip",
+                "install",
+                "-e",
+                f"{PROJECT_DIR.as_posix()}[{extras}]",
+            ]
+        )
     except Exception:
         # No need to print traceback, error will be printed from subprocess stderr
         sys.exit(1)

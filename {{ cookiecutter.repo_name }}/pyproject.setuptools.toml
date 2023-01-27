@@ -16,7 +16,22 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dynamic = ["version"]
+{% if cookiecutter.command_line_interface|lower == 'argparse' -%}
 dependencies = []
+{%- endif -%}
+{% if cookiecutter.command_line_interface|lower == 'no command-line interface' -%}
+dependencies = []
+{%- endif -%}
+{% if cookiecutter.command_line_interface|lower == 'click' %}
+dependencies = [
+    "click"
+]
+{%- endif -%}
+{% if cookiecutter.command_line_interface|lower == 'typer' -%}
+dependencies = [
+    "typer"
+]
+{%- endif %}
 
 [project.optional-dependencies]
 build = ["build", "invoke"]
@@ -43,6 +58,18 @@ docs = [
 [project.urls]
 Repository = "{{ cookiecutter.repo_url }}"
 Issues = "{{ cookiecutter.issues_url }}"
+{% if cookiecutter.command_line_interface == "Argparse" %}
+[project.scripts]
+{{ cookiecutter.project_name }} = "{{ cookiecutter.project_slug }}.cli.app:main"
+{% endif %}
+{%- if cookiecutter.command_line_interface == "Click" %}
+[project.scripts]
+{{ cookiecutter.project_name }} = "{{ cookiecutter.project_slug }}.cli.app:cli"
+{% endif %}
+{%- if cookiecutter.command_line_interface == "Typer" %}
+[project.scripts]
+{{ cookiecutter.project_name }} = "{{ cookiecutter.project_slug }}.cli.app:cli"
+{%- endif %}
 
 [tool.setuptools.dynamic]
 version = { attr = "{{ cookiecutter.project_slug }}.__version__" }

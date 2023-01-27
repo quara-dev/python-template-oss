@@ -27,6 +27,9 @@ jobs:
           python -m pip install --user invoke
           python scripts/install.py -e dev
 
+      - name: Ensure code is formatted
+        run: python -m invoke format --check
+
       - name: Lint with flake8
         run: python -m invoke lint
 

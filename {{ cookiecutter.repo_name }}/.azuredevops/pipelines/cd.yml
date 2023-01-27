@@ -16,12 +16,12 @@ jobs:
           versionSpec: "3.8"
 
       - script: |
-          python -m pip install --upgrade pip setuptools wheel twine
-          pip install -e .[build,docs]
+          python -m pip install --user invoke
+          python scripts/install.py -e build,docs
         displayName: Install dependencies
 
       - script: |
-          inv build --docs
+          python -m invoke build --docs
           cd dist/
           zip -r documentation.zip documentation
         displayName: Build package

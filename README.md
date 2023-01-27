@@ -15,7 +15,7 @@ python3 -m pip install --user cookiecutter
 2. Generate new project in an interactive manner:
 
 ```console
-cookiecutter https://github.com/quara-dev/python-template-oss
+cookiecutter gh:quara-dev/python-template-oss
 ```
 
 > When running the command, you will be prompted for option values. When no value is provided, default value (displayed between `[]`) is used.

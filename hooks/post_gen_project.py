@@ -39,9 +39,9 @@ HELP = """
 
 
 6. Add git origin remote:
-{% if cookiecutter.github %}
+{% if cookiecutter.__github %}
     $ git remote add origin git@github.com:{{ cookiecutter.repo_org }}/{{ cookiecutter.repo_name }}.git
-{%- elif cookiecutter.azdevops %}
+{%- elif cookiecutter.__azdevops %}
     $ git remote add origin git@ssh.dev.azure.com:v3/{{ cookiecutter.repo_org }}/{{ cookiecutter.repo_name }}.git
 {%- endif %}
 
@@ -62,7 +62,7 @@ HELP = """
     $ git checkout -b feat/my_feature_branch
 """
 
-if {{cookiecutter.use_poetry}}:
+if {{ cookiecutter.use_poetry is true }}:
     shutil.move("pyproject.poetry.toml", "pyproject.toml")
     os.remove("pyproject.setuptools.toml")
     shutil.move("scripts/install.poetry.py", "scripts/install.py")
@@ -73,11 +73,31 @@ else:
     shutil.move("scripts/install.setuptools.py", "scripts/install.py")
     os.remove("scripts/install.poetry.py")
 
-if not {{cookiecutter.azdevops}}:
+if not {{cookiecutter.__azdevops}}:
     shutil.rmtree(".azuredevops")
 
-if not {{cookiecutter.github}}:
+if not {{cookiecutter.__github}}:
     shutil.rmtree(".github")
+
+
+CLI = "{{ cookiecutter.command_line_interface }}".lower()
+
+if CLI == "no command-line interface":
+    shutil.rmtree("src/{{ cookiecutter.project_slug }}/cli")
+    os.remove("src/{{ cookiecutter.project_slug }}/__main__.py")
+    os.remove("tests/test_cli.py")
+elif CLI == "argparse":
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.click.py")
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.typer.py")
+    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
+elif CLI == "click":
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py")
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.typer.py")
+    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.click.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
+elif CLI == "typer":
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py")
+    os.remove("src/{{ cookiecutter.project_slug }}/cli/app.click.py")
+    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.typer.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
 
 if {{cookiecutter.init_git_repo}}:
     process = subprocess.run(["git", "init"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)

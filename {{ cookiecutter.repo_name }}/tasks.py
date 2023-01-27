@@ -110,10 +110,11 @@ def check(c: Context, include_tests: bool = False, dry_run: bool = False):
 
 
 @task
-def format(c: Context, dry_run: bool = False):
+def format(c: Context, check: bool = False, dry_run: bool = False):
     """Format source code using black and isort."""
-    run_or_display(c, f"{VENV_PYTHON} -m isort .", dry_run=dry_run)
-    run_or_display(c, f"{VENV_PYTHON} -m black .", dry_run=dry_run)
+    opts = " --check" if check else ""
+    run_or_display(c, f"{VENV_PYTHON} -m isort .{opts}", dry_run=dry_run)
+    run_or_display(c, f"{VENV_PYTHON} -m black .{opts}", dry_run=dry_run)
 
 
 @task
