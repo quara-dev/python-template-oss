@@ -1,9 +1,8 @@
 """See: https://cookiecutter.readthedocs.io/en/latest/advanced/hooks.html#using-pre-post-generate-hooks-0-7-0"""
-import shutil
 import os
+import shutil
 import subprocess
 import sys
-
 
 HELP = """
 ####### Next steps ##########
@@ -62,7 +61,7 @@ HELP = """
     $ git checkout -b feat/my_feature_branch
 """
 
-if {{ cookiecutter.use_poetry is true }}:
+if {{cookiecutter.use_poetry is true}}:
     shutil.move("pyproject.poetry.toml", "pyproject.toml")
     os.remove("pyproject.setuptools.toml")
     shutil.move("scripts/install.poetry.py", "scripts/install.py")
@@ -79,6 +78,8 @@ if not {{cookiecutter.__azdevops}}:
 if not {{cookiecutter.__github}}:
     shutil.rmtree(".github")
 
+if {{cookiecutter.sonar_integration == "Do not use Sonarcloud or Sonarqube"}}:
+    os.remove("sonar-project.properties")
 
 CLI = "{{ cookiecutter.command_line_interface }}".lower()
 
@@ -89,18 +90,29 @@ if CLI == "no command-line interface":
 elif CLI == "argparse":
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.click.py")
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.typer.py")
-    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
+    shutil.move(
+        "src/{{ cookiecutter.project_slug }}/cli/app.argparse.py",
+        "src/{{ cookiecutter.project_slug }}/cli/app.py",
+    )
 elif CLI == "click":
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py")
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.typer.py")
-    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.click.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
+    shutil.move(
+        "src/{{ cookiecutter.project_slug }}/cli/app.click.py",
+        "src/{{ cookiecutter.project_slug }}/cli/app.py",
+    )
 elif CLI == "typer":
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.argparse.py")
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.click.py")
-    shutil.move("src/{{ cookiecutter.project_slug }}/cli/app.typer.py", "src/{{ cookiecutter.project_slug }}/cli/app.py")
+    shutil.move(
+        "src/{{ cookiecutter.project_slug }}/cli/app.typer.py",
+        "src/{{ cookiecutter.project_slug }}/cli/app.py",
+    )
 
 if {{cookiecutter.init_git_repo}}:
-    process = subprocess.run(["git", "init"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    process = subprocess.run(
+        ["git", "init"], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
+    )
     if process.returncode != 0:
         print(process.stderr.decode(), file=sys.stderr)
         sys.exit(1)
@@ -113,7 +125,7 @@ if {{cookiecutter.init_git_repo}}:
             "-m",
             "chore(project): initialize project layout and configured development tools",
         ],
-        stdout=subprocess.DEVNULL
+        stdout=subprocess.DEVNULL,
     )
     subprocess.check_call(["git", "checkout", "-b", "next"], stdout=subprocess.DEVNULL)
     subprocess.check_call(["git", "--no-pager", "log", "--stat"])

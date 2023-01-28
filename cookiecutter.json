@@ -21,6 +21,11 @@
         "Typer"
     ],
     "publish_to_pypi": false,
+    "sonar_integration": [
+        "Sonarcloud",
+        "Sonarqube",
+        "Do not use Sonarcloud or Sonarqube"
+    ],
     "sonarcloud_organization": "{{ cookiecutter.repo_org }}",
     "sonarcloud_key": "{{ cookiecutter.repo_org }}_{{ cookiecutter.project_name }}",
     "__azdevops": "{{ 'dev.azure.com' in cookiecutter.repo_url }}",

@@ -5,12 +5,15 @@ pool:
 # Trigger using Branch Policies. DO NOT use azure repos triggers
 trigger: none
 
+{%- if cookiecutter.sonar_integration != 'Do not use Sonarcloud or Sonarqube' %}
 variables:
   # Update sonar cloud endpoint name if required
-  sonarCloudEndpointName: "SC"
+  sonarEndpointName: "SC"
+  {%- if cookiecutter.sonar_integration == '' %}
   sonarCloudOrganization: "{{ cookiecutter.sonarcloud_organization }}"
-  sonarCloudProjectKey: "{{ cookiecutter.sonarcloud_key }}"
-  sonarCloudProjectName: "{{ cookiecutter.project_name }}"
+  {%- endif %}
+  sonarProjectKey: "{{ cookiecutter.sonarcloud_key }}"
+{%- endif %}
 
 stages:
   - stage: Continuous Integration
@@ -67,7 +70,7 @@ stages:
               summaryFileLocation: "$(System.DefaultWorkingDirectory)/**/cov.xml"
               reportDirectory: "$(System.DefaultWorkingDirectory)/**/coverage-report"
             displayName: Publish code coverage
-
+{% if cookiecutter.sonar_integration == 'Sonarcloud' %}
       - job: Run SonarCloud analysis
         steps:
           - checkout: self
@@ -86,15 +89,11 @@ stages:
 
           - task: SonarCloudPrepare@1
             inputs:
-              SonarCloud: "$(sonarCloudEndpointName)"
               organization: "$(sonarCloudOrganization)"
+              SonarCloud: "$(sonarEndpointName)"
               scannerMode: "CLI"
               configMode: "manual"
-              cliProjectKey: "$(sonarCloudProjectKey)"
-              cliProjectName: "$(sonarCloudProjectName)"
-              cliSources: "src"
-              extraProperties: |
-                sonar.verbose=true
+              cliProjectKey: "$(sonarProjectKey)"
             displayName: Prepare SonarCloud analysis
 
           - task: SonarCloudAnalyze@1
@@ -104,3 +103,35 @@ stages:
             inputs:
               pollingTimeoutSec: "300"
             displayName: Wait for SnarCloud to publish result on the Pipeline build summary
+{% elif cookiecutter.sonar_integration == 'Sonarqube' %}
+      - job: Run Sonarqube analysis
+        steps:
+          - checkout: self
+
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.8"
+
+          - script: |
+              python -m pip install --user invoke
+              python3 scripts/install.py -e dev
+            displayName: Install project and dependencies
+
+          - script: python -m invoke check --coverage
+            displayName: Test with pytest
+
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: "$(sonarEndpointName)"
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: '$(sonarProjectKey)'
+
+          # Run Code Analysis task
+          - task: SonarQubeAnalyze@5
+
+          # Publish Quality Gate Result task
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'
+{% endif %}

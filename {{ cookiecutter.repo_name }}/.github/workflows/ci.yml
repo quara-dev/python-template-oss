@@ -38,8 +38,8 @@ jobs:
 
       - name: Test with pytest
         run: python -m invoke test --coverage
-
-  sonar:
+{% if cookiecutter.sonar_integration == 'Sonarcloud' %}
+  sonarcloud:
     name: Run SonarCloud analysis
     runs-on: ubuntu-latest
     steps:
@@ -68,7 +68,37 @@ jobs:
         env:
           GITHUB_TOKEN: {% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}
           SONAR_TOKEN: {% raw %}${{ secrets.SONAR_TOKEN }}{% endraw %}
+{%- elif cookiecutter.sonar_integration == 'Sonarqube' %}
+  sonarqube:
+    name: Run SonarCloud analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
+      - name: Set up Python {% raw %}${{ matrix.python-version }}{% endraw %}
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --user invoke
+          python scripts/install.py -e dev
+
+      - name: Test with pytest
+        run: python -m invoke test --coverage
+
+      - name: Set project version for Sonarcloud analysis
+        run: echo "sonar.projectVersion=$(python scripts/version.py)" >> sonar-project.properties
+
+      - name: Analyse with Sonarqube
+        uses: kitabisa/sonarqube-action@v1.2.0
+        with:
+          host: {% raw %}${{ secrets.SONAR_HOST }}{% endraw %}
+          login: {% raw %}${{ secrets.SONAR_TOKEN }}{% endraw %}
+{% endif %}
   semantic_release:
     name: Run semantic release
     runs-on: ubuntu-latest

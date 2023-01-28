@@ -6,6 +6,9 @@ trigger:
     include:
       - "*"
 
+variables:
+  artifactFeed: quara-project
+
 jobs:
   - job: Publish release
     steps:
@@ -16,7 +19,7 @@ jobs:
           versionSpec: "3.8"
 
       - script: |
-          python -m pip install --user invoke
+          python -m pip install --user invoke twine
           python scripts/install.py -e build,docs
         displayName: Install dependencies
 
@@ -26,6 +29,15 @@ jobs:
           zip -r documentation.zip documentation
         displayName: Build package
 
+      - task: TwineAuthenticate@0
+        inputs:
+          artifactFeeds: "$(artifactFeed)"
+
+      - script: |
+          echo -e "Publishing on feed $(feed.name) using configuration file $(PYPIRC_PATH)"
+          twine upload -r $(feed.name) --config-file $(PYPIRC_PATH) dist/*
+        displayName: Publish software
+
       # Deploy Azure Static Web App v0
       # - task: AzureStaticWebApp@0
       #   inputs:
@@ -34,14 +46,3 @@ jobs:
       #     is_static_export: true
       #     verbose: true
       #   displayName: Publish documentation to Azure Static Web App
-
-      # - task: TwineAuthenticate@0
-      #   inputs:
-      #     # Update artifact feed name if required
-      #     artifactFeeds: {{ cookiecutter.project_name }}
-      #   displayName: Authenticate in order to publish to Azure Feed
-
-      # - script: |
-      #     echo -e "Publishing on feed $(feed.name) using configuration file $(PYPIRC_PATH)"
-      #     twine upload -r $(feed.name) --config-file $(PYPIRC_PATH) dist/*
-      #   displayName: Publish Python package to Azure Feed
