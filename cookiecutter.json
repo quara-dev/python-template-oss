@@ -13,7 +13,6 @@
     "requires_python": ">=3.8,<4.0",
     "license": "Apache-2.0",
     "init_git_repo": true,
-    "use_poetry": false,
     "command_line_interface": [
         "No command-line interface",
         "Argparse",
@@ -21,13 +20,6 @@
         "Typer"
     ],
     "publish_to_pypi": false,
-    "sonar_integration": [
-        "Sonarcloud",
-        "Sonarqube",
-        "Do not use Sonarcloud or Sonarqube"
-    ],
     "sonarcloud_organization": "{{ cookiecutter.repo_org }}",
-    "sonarcloud_key": "{{ cookiecutter.repo_org }}_{{ cookiecutter.project_name }}",
-    "__azdevops": "{{ 'dev.azure.com' in cookiecutter.repo_url }}",
-    "__github": "{{ 'github.com' in cookiecutter.repo_url }}"
+    "sonarcloud_key": "{{ cookiecutter.repo_org }}_{{ cookiecutter.project_name }}"
 }

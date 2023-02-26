@@ -1,6 +1,6 @@
 # Template Python OSS
 
-> A cookiecutter template for open source Python projects.
+> A cookiecutter template for open source Python projects hosted on Github.
 
 # Quick Start
 

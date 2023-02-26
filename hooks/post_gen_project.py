@@ -38,11 +38,7 @@ HELP = """
 
 
 6. Add git origin remote:
-{% if cookiecutter.__github %}
     $ git remote add origin git@github.com:{{ cookiecutter.repo_org }}/{{ cookiecutter.repo_name }}.git
-{%- elif cookiecutter.__azdevops %}
-    $ git remote add origin git@ssh.dev.azure.com:v3/{{ cookiecutter.repo_org }}/{{ cookiecutter.repo_name }}.git
-{%- endif %}
 
 
 7. Push next branch:
@@ -61,32 +57,12 @@ HELP = """
     $ git checkout -b feat/my_feature_branch
 """
 
-if {{cookiecutter.use_poetry is true}}:
-    shutil.move("pyproject.poetry.toml", "pyproject.toml")
-    os.remove("pyproject.setuptools.toml")
-    shutil.move("scripts/install.poetry.py", "scripts/install.py")
-    os.remove("scripts/install.setuptools.py")
-else:
-    shutil.move("pyproject.setuptools.toml", "pyproject.toml")
-    os.remove("pyproject.poetry.toml")
-    shutil.move("scripts/install.setuptools.py", "scripts/install.py")
-    os.remove("scripts/install.poetry.py")
-
-if not {{cookiecutter.__azdevops}}:
-    shutil.rmtree(".azuredevops")
-
-if not {{cookiecutter.__github}}:
-    shutil.rmtree(".github")
-
-if {{cookiecutter.sonar_integration == "Do not use Sonarcloud or Sonarqube"}}:
-    os.remove("sonar-project.properties")
-
 CLI = "{{ cookiecutter.command_line_interface }}".lower()
 
 if CLI == "no command-line interface":
     shutil.rmtree("src/{{ cookiecutter.project_slug }}/cli")
     os.remove("src/{{ cookiecutter.project_slug }}/__main__.py")
-    os.remove("tests/test_cli.py")
+    os.remove("tests/e2e/test_cli.py")
 elif CLI == "argparse":
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.click.py")
     os.remove("src/{{ cookiecutter.project_slug }}/cli/app.typer.py")
@@ -108,6 +84,10 @@ elif CLI == "typer":
         "src/{{ cookiecutter.project_slug }}/cli/app.typer.py",
         "src/{{ cookiecutter.project_slug }}/cli/app.py",
     )
+
+subprocess.check_call([sys.executable, "./scripts/install.py", "--all"])
+project_python = subprocess.check_output([sys.executable, "./scripts/install.py", "--show-python-path"]).strip().decode()
+subprocess.check_call([project_python, "-m", "invoke", "requirements"])
 
 if {{cookiecutter.init_git_repo}}:
     process = subprocess.run(
