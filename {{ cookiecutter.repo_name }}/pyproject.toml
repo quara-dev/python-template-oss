@@ -34,15 +34,15 @@ dependencies = [
 {%- endif %}
 
 [project.optional-dependencies]
-build = ["build", "invoke"]
+build = ["build", "invoke", "pip-tools"]
 dev = [
     "black",
     "isort",
     "invoke",
     "flake8",
     "mypy",
-    "mutmut",
     "pytest",
+    "pytest-asyncio",
     "pytest-cov",
     "types-setuptools",
 ]

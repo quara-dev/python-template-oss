@@ -7,10 +7,10 @@ import os
 import pathlib
 import subprocess
 import sys
-import typing as t
 import venv
 
-VENV_DIR = pathlib.Path(__file__).parent.parent.resolve(True) / ".venv"
+PROJECT_DIR = pathlib.Path(__file__).parent.parent.resolve(True)
+VENV_DIR = PROJECT_DIR / ".venv"
 
 
 if os.name == "nt":
@@ -38,6 +38,7 @@ def install_virtualenv() -> None:
                 "-U",
                 "pip",
                 "setuptools",
+                "wheel",
             ]
         )
     except Exception:
@@ -45,11 +46,16 @@ def install_virtualenv() -> None:
         sys.exit(1)
 
 
-def install_project(groups: t.Optional[str] = None) -> None:
+def install_project(extras: str = "") -> None:
     """Installing project in editable mode using pip"""
-    cmd = ["poetry", "install"]
-    if groups:
-        cmd += ["--with", groups]
+    cmd = [
+        VENV_PYTHON,
+        "-m",
+        "pip",
+        "install",
+        "-e",
+        PROJECT_DIR.as_posix() + (f"[{extras}]" if extras else ""),
+    ]
     try:
         subprocess.run(cmd)
     except Exception:
@@ -64,12 +70,33 @@ cli_parser = argparse.ArgumentParser(
     )
 )
 cli_parser.add_argument(
-    "-g",
-    "--groups",
+    "--no-build",
+    action="store_true",
+    required=False,
+    default=False,
+    help="Do not install build dependencies",
+)
+cli_parser.add_argument(
+    "--dev",
+    action="store_true",
+    required=False,
+    default=False,
+    help="Install development extras",
+)
+cli_parser.add_argument(
+    "--docs",
+    action="store_true",
+    required=False,
+    default=False,
+    help="Install documentation extras",
+)
+cli_parser.add_argument(
+    "-e",
+    "--extras",
     type=str,
     required=False,
     default=None,
-    help="Install additional dependency groups",
+    help="Install additional extras",
 )
 cli_parser.add_argument(
     "-a",
@@ -77,22 +104,34 @@ cli_parser.add_argument(
     action="store_true",
     required=False,
     default=False,
-    help="Install all dependency groups",
+    help="Install all extras",
+)
+cli_parser.add_argument(
+    "--show-python-path",
+    action="store_true",
+    required=False,
+    default=False,
+    help="Show path to python interpreter within virtual environment and exit",
 )
 
 if __name__ == "__main__":
     args = cli_parser.parse_args()
+    # Show venv
+    if args.show_python_path:
+        print(VENV_PYTHON.as_posix())
+        sys.exit(0)
     # Parse arguments
-    groups = args.groups
-    all_groups = args.all
+    extras = set(args.extras.split(",")) if args.extras else set()
     # First make sure virtualenv exists
     install_virtualenv()
+    # Gather extras
+    if not args.no_build:
+        extras = extras.union(set(["build"]))
+    if args.dev:
+        extras = extras.union(set(["dev", "build"]))
+    if args.docs:
+        extras = extras.union(set(["docs", "build"]))
+    if args.all:
+        extras = extras.union(set(["dev", "docs", "build"]))
     # Install project in development mode
-    if groups:
-        install_project(groups)
-    elif all_groups:
-        # Install all extras
-        install_project("dev,docs")
-    else:
-        # Only install build dependencies by default
-        install_project()
+    install_project(",".join(extras))

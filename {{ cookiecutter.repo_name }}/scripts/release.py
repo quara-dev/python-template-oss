@@ -33,9 +33,7 @@ def update_version_string(new_version: str) -> None:
             )
         )
         about_file.truncate()
-{% if cookiecutter.use_poetry is true -%}
-    subprocess.check_call(["poetry", "bump", new_version])
-{%- endif %}
+
 
 def run(cmd: str) -> None:
     """Run a command using shell mode and check the return code."""

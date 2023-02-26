@@ -42,6 +42,21 @@ def clean(
 
 
 @task
+def requirements(c: Context, with_hashes: bool = False, dry_run: bool = False):
+    """Generate requirementx.txt (required to build docker image)"""
+    cmd = (
+        f"{VENV_PYTHON} -m piptools compile"
+        " --no-header"
+        " --output-file=requirements.txt"
+        " --resolver=backtracking"
+    )
+    if with_hashes:
+        cmd += " --generate-hashes"
+    cmd += " pyproject.toml"
+    run_or_display(c, cmd, dry_run=dry_run)
+
+
+@task
 def build(c: Context, docs: bool = False, dry_run: bool = False):
     """Build sdist and wheel, and optionally build documentation."""
     python_build_cmd = f"{VENV_PYTHON} -m build --no-isolation --outdir dist ."
@@ -83,11 +98,26 @@ def docs(c: Context, watch: bool = True, port: int = 8000, dry_run: bool = False
 
 
 @task
-def test(c: Context, coverage: bool = False, dry_run: bool = False):
+def test(
+    c: Context,
+    e2e: bool = False,
+    cov: bool = False,
+    markers: str = "",
+    pattern: str = "",
+    dry_run: bool = False,
+):
     """Run tests using pytest and optionally enable coverage."""
     cmd = f"{VENV_PYTHON} -m pytest"
-    if coverage:
-        cmd += " --cov src"
+    if markers:
+        cmd += f" -m {markers}"
+    if pattern:
+        cmd += f" -p {pattern}"
+    if cov:
+        cmd += " --cov src/{{ cookiecutter.project_slug }}"
+    if e2e:
+        cmd += " tests/"
+    else:
+        cmd += " tests/unit/"
     run_or_display(c, cmd, dry_run=dry_run)
 
 
@@ -126,38 +156,7 @@ def lint(c: Context, dry_run: bool = False):
 @task
 def docker(
     c: Context,
-    name: str = "{{ cookiecutter.project_name }}",
-    tag: str = "latest",
-    registry: t.Optional[str] = None,
-    base_image: t.Optional[str] = None,
-    push: bool = False,
-    build: bool = False,
-    dry_run: bool = False,
-):
-    """Build docker image for the project"""
-    if build:
-        wheelhouse(c, clean=True, compress=False, dry_run=dry_run)
-    image = f"{name}:{tag}"
-    if registry:
-        while registry.endswith("/"):
-            registry = registry[:-1]
-        image = f"{registry}/{image}"
-    build_args: t.Dict[str, str] = {}
-    if base_image:
-        build_args["BASE_IMAGE"] = base_image
-    cmd = f"docker build -t {image}"
-    for key, value in build_args.items():
-        cmd += f" --build-arg {key}={value}"
-    cmd += " ."
-    run_or_display(c, cmd, dry_run=dry_run)
-    if push:
-        run_or_display(c, f"docker push {image}", dry_run=dry_run)
-
-
-@task
-def docker_cp(
-    c: Context,
-    platforms: str = "linux/amd64,linux/arm64",
+    platforms: str = "linux/amd64",
     name: str = "{{ cookiecutter.project_name }}",
     tag: str = "latest",
     registry: t.Optional[str] = None,
@@ -166,6 +165,8 @@ def docker_cp(
     push: bool = False,
     load: bool = False,
     output: t.Optional[str] = None,
+    provenance: bool = False,
+    pip_config: str = "~/.config/pip/pip.conf",
     dry_run: bool = False,
 ):
     """Build cross-platform docker image for the project"""
@@ -179,7 +180,18 @@ def docker_cp(
         build_args["BASE_IMAGE"] = base_image
     if build_image:
         build_args["BUILD_IMAGE"] = build_image
-    cmd = f"docker buildx build -t {image} -f Dockerfile.cross-platform"
+    # Create an empty pip config if user does not have a pip config yet
+    # Use strict permissions since pip config can hold tokens
+    pip_configfile = Path(pip_config).expanduser()
+    if not pip_configfile.exists():
+        if not pip_configfile.parent.exists():
+            pip_configfile.parent.mkdir(parents=True, mode=600)
+        pip_configfile.touch(mode=600)
+    pip_config = pip_configfile.as_posix()
+    # buildx command
+    cmd = f"docker buildx build --secret id=pip-config,src={pip_config} -t {image} -f Dockerfile"
+    if not provenance:
+        cmd += " --provenance=false"
     if push:
         cmd += " --push"
     elif load:
@@ -191,3 +203,12 @@ def docker_cp(
         cmd += f" --build-arg {key}={value}"
     cmd += " ."
     run_or_display(c, cmd, dry_run=dry_run)
+
+
+@task
+def pre_push(c: Context):
+    """Ensure checks performed in CI will not fail before pushing to remote"""
+    format(c, check=True)
+    lint(c)
+    check(c, include_tests=True)
+    test(c)
